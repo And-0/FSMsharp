@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace FSMSharp
 {
@@ -14,6 +15,7 @@ namespace FSMSharp
 	{
 		Dictionary<T, FsmStateBehaviour<T>> m_StateBehaviours = new Dictionary<T, FsmStateBehaviour<T>>();
 		T m_CurrentState = default(T);
+		T m_PreviousState = default(T);
 		FsmStateBehaviour<T> m_CurrentStateBehaviour;
 		float m_StateAge = -1f;
 		string m_FsmName = null;
@@ -134,8 +136,17 @@ namespace FSMSharp
 		/// <exception cref="InvalidOperationException">If the behaviour has not a next state / state selector configured.</exception>
 		public void Next()
 		{
+			
 			if (m_CurrentStateBehaviour.NextStateSelector != null)
-				this.CurrentState = m_CurrentStateBehaviour.NextStateSelector();
+            {
+                var nextState = m_CurrentStateBehaviour.NextStateSelector();
+                if (!EqualityComparer<T>.Default.Equals(CurrentState, nextState))
+                {
+                    this.m_PreviousState = this.CurrentState;
+                    this.CurrentState = nextState;
+                }
+            }
+				
 			else
 				throw new InvalidOperationException(string.Format("[FSM {0}] : Can't call 'Next' on current behaviour.", m_FsmName));
 		}
